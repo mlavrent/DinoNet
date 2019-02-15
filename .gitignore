@@ -1,7 +1,2 @@
-*.py[co]
-*.sw[po]
-*~
-*.log
-*.mo
-
-/.idea/
+.idea/
+data/
