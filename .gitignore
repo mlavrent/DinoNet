@@ -1,2 +1,10 @@
+
+# PyCharm Settings File
 .idea/
+
+# Data files
 data/
+
+# Compiled files
+*.py[cod]
+__pycache__/
