@@ -54,7 +54,7 @@ class MainWindow(QWidget):
         self.show()
 
 
-    def imgExists(self, n):
+    def imgExists(self, n: int):
         return os.path.isfile("data/images/" + self.imgSet + "/" + str(n).zfill(4) + ".jpeg")
 
     def showImage(self):
@@ -132,7 +132,7 @@ class MainWindow(QWidget):
         self.showImage()
 
 
-def run(imgSet, fps=10):
+def run(imgSet: str, fps: float = 10):
     app = QApplication([])
     window = MainWindow(imgSet, fps)
     app.exec_()
