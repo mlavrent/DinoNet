@@ -24,6 +24,12 @@ class Datum:
         self.duck = duck
         self.isDucked = isDucked
 
+    def get_input(self):
+        return self.normImgArr
+
+    def get_target(self):
+        return np.array([self.jump, self.inAir, self.duck, self.isDucked])
+
     def __str__(self) -> str:
         actionSymbol = "↑" if self.jump else ("↓" if self.duck else "•")
         stateSymbol = "✈" if self.inAir else ("🦆" if self.isDucked else "•")
