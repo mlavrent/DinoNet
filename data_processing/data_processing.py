@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-import os
+import random
 import csv
 from typing import List, Generator
 
@@ -13,11 +13,6 @@ class Datum:
     def __init__(self, fileName: str, time: float, jump: bool, inAir: bool, duck: bool, isDucked: bool):
         self.fileName = fileName
 
-        # convert to grayscale immediately
-        pilImg = Image.open(fileName).convert('LA')
-        self.imgArr = np.array(pilImg)
-        self.normImgArr = self.imgArr / 255
-
         self.time = time
         self.jump = jump
         self.inAir = inAir
@@ -25,7 +20,12 @@ class Datum:
         self.isDucked = isDucked
 
     def get_input(self):
-        return self.normImgArr
+        # load image only when needed
+        pilImg = Image.open(self.fileName).convert('LA')
+        imgArr = np.array(pilImg)
+        normImgArr = self.imgArr / 255
+
+        return normImgArr
 
     def get_target(self):
         return np.array([self.jump, self.inAir, self.duck, self.isDucked])
@@ -67,12 +67,39 @@ class DataLoader:
         for datasetName in datasetNames:
             self.imgFiles.append(DataFile(datasetName))
 
-    def load_data(self) -> List[Datum]:
+    def load_all_data(self) -> List[Datum]:
         data = []
         for file in self.imgFiles:
             for datum in file.next_row():
                 data.append(datum)
         return data
+
+    def load_all_data_random_order(self) -> List[Datum]:
+        data = self.load_all_data()
+        random.shuffle(data)
+        return data
+
+    def get_next_batch(self, batchSize) -> List[Datum]:
+        allData = self.load_all_data_random_order()
+        datasetSize = len(allData)
+
+        i = 0
+        while True:
+            # Get the batch
+            if i + batchSize > datasetSize:
+                # If needed, wrap around to start of data list
+                batchData = allData[i:] + allData[:datasetSize - i]
+            else:
+                batchData = allData[i:i + batchSize]
+
+            # Increment the position
+            i += batchSize
+            if i >= len(allData):
+                # If over, wrap around and re-shuffle the dataset
+                i %= datasetSize
+                random.shuffle(allData)
+
+            yield batchData
 
     def close_data(self):
         for file in self.imgFiles:
@@ -82,4 +109,4 @@ class DataLoader:
 if __name__ == "__main__":
     # Test dataloader
     loader = DataLoader(["game4"])
-    print(loader.load_data())
+    print(loader.load_all_data())
