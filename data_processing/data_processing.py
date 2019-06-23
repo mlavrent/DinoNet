@@ -79,7 +79,7 @@ class DataLoader:
         random.shuffle(data)
         return data
 
-    def get_next_batch(self, batchSize) -> List[Datum]:
+    def batch_generator(self, batchSize) -> List[Datum]:
         allData = self.load_all_data_random_order()
         datasetSize = len(allData)
 
@@ -92,6 +92,9 @@ class DataLoader:
             else:
                 batchData = allData[i:i + batchSize]
 
+            # Yield the batch out
+            yield batchData
+
             # Increment the position
             i += batchSize
             if i >= len(allData):
@@ -99,14 +102,12 @@ class DataLoader:
                 i %= datasetSize
                 random.shuffle(allData)
 
-            yield batchData
-
     def close_data(self):
         for file in self.imgFiles:
             file.close()
 
 
 if __name__ == "__main__":
-    # Test dataloader
+    # Test data loader
     loader = DataLoader(["game4"])
     print(loader.load_all_data())
