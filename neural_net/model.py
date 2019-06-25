@@ -124,9 +124,11 @@ def parse_args():
     parser.add_argument("--save", required=False, default="saved_models")
 
     args = vars(parser.parse_args())
-    print(args)
-
     returnables = []
+
+    # Add load arg to returnable
+    if args["load"] is not None:
+        returnables.append(("load", args["load"]))
 
     # Add actions to returnable
     if args["train"] is not None:
@@ -134,13 +136,25 @@ def parse_args():
     if args["eval"] is not None:
         returnables.append(("eval", args["eval"]))
 
-    # Add load/save values to returnable
-    if args["load"] is not None:
-        returnables.append(("load", args["load"]))
+    # Add save arg to returnable
     returnables.append(("save", args["save"]))
 
     return returnables
 
+
 if __name__ == "__main__":
+    # Actions, in order they should be performed
     actions = parse_args()
-    print(actions)
+
+    for action in actions:
+        if action == "load":
+            ...
+        elif action == "train":
+            ...
+        elif action == "eval":
+            ...
+        elif action == "save":
+            ...
+        else:
+            raise LookupError("Unknown action requested")
+
