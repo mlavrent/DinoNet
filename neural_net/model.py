@@ -1,17 +1,19 @@
 import tensorflow as tf
 import functools
+from time import time
 from typing import Tuple, List
 from data_processing.data_processing import DataLoader
 
 
-def lazy_property(function):
+def define_scope(function):
     attribute = '_cache_' + function.__name__
 
     @property
     @functools.wraps(function)
     def decorator(self):
         if not hasattr(self, attribute):
-            setattr(self, attribute, function(self))
+            with tf.variable_scope(function.__name):
+                setattr(self, attribute, function(self))
         return getattr(self, attribute)
 
     return decorator
