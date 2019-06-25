@@ -112,7 +112,7 @@ class Model:
 #   - "train": int value, number of epochs to train for
 #   - "evaluate": string value, path to image to evaluate model for
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run or train the model")
+    parser = argparse.ArgumentParser(description="Control training, running, and saving the tf model.")
 
     # Group for determining action to take
     action_group = parser.add_mutually_exclusive_group(required=True)
@@ -121,7 +121,7 @@ def parse_args():
 
     # Args for loading/saving model
     parser.add_argument("--load", required=False, help="File to load stored model from.")
-    parser.add_argument("--save", required=False, default="saved_models")
+    parser.add_argument("--save", required=False, default="saved_models/")
 
     args = vars(parser.parse_args())
     returnables = []
@@ -143,10 +143,13 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    # Create the model
+    model = Model()
+
     # Actions, in order they should be performed
     actions = parse_args()
 
-    for action in actions:
+    for action, value in actions:
         if action == "load":
             ...
         elif action == "train":
