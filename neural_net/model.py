@@ -1,6 +1,7 @@
 import tensorflow as tf
 import functools
 from time import time
+import argparse
 from typing import Tuple, List
 from data_processing.data_processing import DataLoader
 
@@ -52,7 +53,6 @@ class Model:
 
         self.saveDir = saveDir
 
-    @tf.function
     @define_scope
     def prediction(self):
         #x = tf.placeholder(tf.float32, shape=(120, 30, 1), name="x")  # size: (120, 30, 1) x1
@@ -70,14 +70,12 @@ class Model:
 
         return fcl2
 
-    @tf.function
     @define_scope
     def optimize(self):
         xent = - tf.reduce_sum(self.y, tf.log(self.prediction))
         optimizer = tf.train.AdamOptimizer(0.03)
         return optimizer.minimize(xent)
 
-    @tf.function
     @define_scope
     def error(self):
         mistakes = tf.not_equal(tf.argmax(self.y, 1), tf.argmax(self.prediction, 1))
@@ -110,16 +108,23 @@ class Model:
             sess.run(self.optimize(), feed_dict={'x': ..., 'y': ...})
 
 
-def main():
-    sess = tf.Session()
+# returns tuple of (action, value) where action is one of:
+#   - "train": int value, number of epochs to train for
+#   - "evaluate": string value, path to image to evaluate model for
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run or train the model")
 
-    # dataLoader = DataLoader(["game4", "game5"])
-    # model = Model(dataLoader, [120, 30, 1], [4], saveDir="models/")
-    #
-    # model.train(200, 100, sess, modelNum=1, tbLogDir="tensorboard/")
+    action_group = parser.add_mutually_exclusive_group(required=True)
+    action_group.add_argument("--train", required=False, type=int, help="Number of epochs to train for.")
+    action_group.add_argument("--eval", required=False, help="Image file to evaluate model on.")
 
-    sess.close()
+    args = vars(parser.parse_args())
+
+    if args["train"] is not None:
+        return "train", args["train"]
+    elif args["eval"] is not None:
+        return "eval", args["eval"]
 
 
 if __name__ == "__main__":
-    main()
+    print(parse_args())
