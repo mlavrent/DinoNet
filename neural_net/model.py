@@ -52,7 +52,8 @@ class Model:
 
         self.saveDir = saveDir
 
-    @lazy_property
+    @tf.function
+    @define_scope
     def prediction(self):
         #x = tf.placeholder(tf.float32, shape=(120, 30, 1), name="x")  # size: (120, 30, 1) x1
 
@@ -69,17 +70,17 @@ class Model:
 
         return fcl2
 
-
-    @lazy_property
+    @tf.function
+    @define_scope
     def optimize(self):
         xent = - tf.reduce_sum(self.y, tf.log(self.prediction))
         optimizer = tf.train.AdamOptimizer(0.03)
         return optimizer.minimize(xent)
 
-    @lazy_property
+    @tf.function
+    @define_scope
     def error(self):
-        # TODO: rework how cost is calculated
-        mistakes = tf.not_equal(tf.argmax(self.target, 1), tf.argmax(self.prediction, 1))
+        mistakes = tf.not_equal(tf.argmax(self.y, 1), tf.argmax(self.prediction, 1))
         return tf.reduce_mean(tf.cast(mistakes, tf.float32))
 
     def train(self, numBatches: int, batchSize: int, sess,
@@ -91,20 +92,34 @@ class Model:
             writer.add_graph(sess.graph)
             merged_summary = tf.summary.merge_all()
 
+        # Create saver to checkpoint our training
+        saver = tf.train.Saver(max_to_keep=5)
+
+        # Initialize variables
+        sess.run(tf.global_variables_initializer())
+
+        # Helper variables for logging
+        startTime = lastLog = time()
+
         for i in range(numBatches):
-            ...
+
+            # Report accuracy every 120 seconds
+            if time() - lastLog > 120:
+                print("Step {}: Training accuracy: {}".format(i, 1 - self.error))
+
+            sess.run(self.optimize(), feed_dict={'x': ..., 'y': ...})
 
 
-def main(argv):
+def main():
     sess = tf.Session()
 
-    dataLoader = DataLoader(["game4", "game5"])
-    model = Model(dataLoader, [120, 30, 1], [4], saveDir="models/")
-
-    model.train(200, 100, sess, modelNum=1, tbLogDir="tensorboard/")
+    # dataLoader = DataLoader(["game4", "game5"])
+    # model = Model(dataLoader, [120, 30, 1], [4], saveDir="models/")
+    #
+    # model.train(200, 100, sess, modelNum=1, tbLogDir="tensorboard/")
 
     sess.close()
 
 
 if __name__ == "__main__":
-    tf.app.run(main=main)
+    main()
