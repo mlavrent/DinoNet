@@ -1,4 +1,5 @@
 import webbrowser
+import sys
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
 from neural_net.model import Model
@@ -21,8 +22,13 @@ def startBrowser(conn: Connection):
     logMessage("Browser closed")
 
 
-def runClassifier(conn: Connection):
+def runClassifier(conn: Connection, model_save_file: str):
     logMessage("Starting model")
+
+    model = Model()
+    # TODO: load model here
+
+    logMessage("Model loaded")
 
     while True:
         break
@@ -32,10 +38,15 @@ def runClassifier(conn: Connection):
 
 
 if __name__ == "__main__":
+    # Get directory of save file to load model from
+    assert len(sys.argv) == 2
+    model_save_file = sys.argv[1]
+
+    # Set up the two processes to run side-by-side
     browserConn, modelConn = Pipe(True)
 
     browserProc = Process(target=startBrowser, args=(browserConn,))
-    modelProc = Process(target=runClassifier, args=(modelConn,))
+    modelProc = Process(target=runClassifier, args=(modelConn, model_save_file))
     modelProc.daemon = True
 
     modelProc.start()
