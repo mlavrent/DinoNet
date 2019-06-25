@@ -108,23 +108,39 @@ class Model:
             sess.run(self.optimize(), feed_dict={'x': ..., 'y': ...})
 
 
-# returns tuple of (action, value) where action is one of:
+# returns list of (action, value) tuples where action is one of:
 #   - "train": int value, number of epochs to train for
 #   - "evaluate": string value, path to image to evaluate model for
 def parse_args():
     parser = argparse.ArgumentParser(description="Run or train the model")
 
+    # Group for determining action to take
     action_group = parser.add_mutually_exclusive_group(required=True)
     action_group.add_argument("--train", required=False, type=int, help="Number of epochs to train for.")
     action_group.add_argument("--eval", required=False, help="Image file to evaluate model on.")
 
+    # Args for loading/saving model
+    parser.add_argument("--load", required=False, help="File to load stored model from.")
+    parser.add_argument("--save", required=False, default="saved_models")
+
     args = vars(parser.parse_args())
+    print(args)
 
+    returnables = []
+
+    # Add actions to returnable
     if args["train"] is not None:
-        return "train", args["train"]
-    elif args["eval"] is not None:
-        return "eval", args["eval"]
+        returnables.append(("train", args["train"]))
+    if args["eval"] is not None:
+        returnables.append(("eval", args["eval"]))
 
+    # Add load/save values to returnable
+    if args["load"] is not None:
+        returnables.append(("load", args["load"]))
+    returnables.append(("save", args["save"]))
+
+    return returnables
 
 if __name__ == "__main__":
-    print(parse_args())
+    actions = parse_args()
+    print(actions)
