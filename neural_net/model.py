@@ -106,19 +106,58 @@ def parse_args():
 if __name__ == "__main__":
     # Create the model
     model = Model()
+    model.compile(tf.keras.optimizers.Adam(learning_rate=0.001,), tf.losses.binary_crossentropy)
+
+    # Create Data Loader
+    dataLoader = DataLoader(["game4"])
 
     # Actions, in order they should be performed
     actions = parse_args()
 
     for action, value in actions:
         if action == "load":
-            ...
+            print("Loading model from {}".format(value))
+            model.load_trained_model(value)
+
         elif action == "train":
-            ...
+            print("Training model for {} epochs".format(value))
+            batchSize = 100
+
+            # Set up tensorboard logger
+            tbLogger = tf.keras.callbacks.TensorBoard(log_dir="./logs",
+                                                      histogram_freq=0,
+                                                      write_graph=True,
+                                                      write_grads=False,
+                                                      write_images=True,
+                                                      embeddings_freq=0,
+                                                      embeddings_layer_names=None,
+                                                      embeddings_metadata=None,
+                                                      embeddings_data=None,
+                                                      update_freq="batch",
+                                                      profile_batch=2)
+
+            #TODO: fill in the .fit() call below
+            model.fit_generator(generator=dataLoader.batch_generator(batchSize),
+                                steps_per_epoch=int(dataLoader.size()/batchSize),
+                                epochs=value,
+                                verbose=2,
+                                callbacks=[tbLogger],
+                                workers=2,
+                                use_multiprocessing=True,
+                                shuffle=True,)
+
         elif action == "eval":
-            ...
+            imgData = np.array(Image.open(value))
+            output = model.predict(imgData)
+
+            print("Evaluating on image at {}. Output: {}".format(value, output))
+
         elif action == "save":
-            ...
+            print("Saving model to {}".format(value))
+            model.save(value)
+
         else:
             raise LookupError("Unknown action requested")
+
+    dataLoader.close_data()
 
