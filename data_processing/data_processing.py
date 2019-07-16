@@ -79,6 +79,8 @@ class DataLoader:
         random.shuffle(data)
         return data
 
+    #TODO: switch over to using tf.keras.utils.Sequence for multiprocessing-safety
+
     def batch_generator(self, batchSize) -> List[Datum]:
         allData = self.load_all_data_random_order()
         datasetSize = len(allData)
@@ -101,6 +103,9 @@ class DataLoader:
                 # If over, wrap around and re-shuffle the dataset
                 i %= datasetSize
                 random.shuffle(allData)
+
+    def size(self) -> int:
+        return len(self.load_all_data())
 
     def close_data(self):
         for file in self.imgFiles:
