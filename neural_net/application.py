@@ -1,8 +1,10 @@
-import webbrowser
-import sys
+from selenium import webdriver
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
-from neural_net.model import Model
+#from neural_net.model import Model
+from PIL import Image
+from io import BytesIO
+import base64
 import time
 
 
@@ -16,37 +18,57 @@ def startBrowser(conn: Connection):
     chromePath = "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s"
     dinoURL = "chrome://dino"
 
-    webbrowser.get(chromePath).open(dinoURL)
+    driver = webdriver.Chrome()
+    driver.maximize_window()
+    driver.get(dinoURL)
 
-    conn.close()
+    body = driver.find_element_by_css_selector("body")
+
+    time.sleep(3)
+    body.send_keys(" ")
+
+    # Run browser until user closes it
+    while True:
+        # Take screenshot and send it
+        sshot_str = driver.get_screenshot_as_base64()
+
+        if sshot_str is not None:
+            img = Image.open(BytesIO(base64.b64decode(sshot_str)))
+        else:
+            break
+
+    driver.quit()
     logMessage("Browser closed")
 
 
 def runClassifier(conn: Connection, model_save_file: str):
     logMessage("Starting model")
 
-    model = Model()
-    # TODO: load model here
-
+    # model = Model(loadFile=model_save_file)
     logMessage("Model loaded")
 
     while True:
-        break
-    conn.close()
+        try:
+            input_img = conn.recv()
+            # result = model.predict(input_img)
+            # conn.send(result)
+        except EOFError:
+            break
+
     logMessage("Model stopped")
 
 
 
 if __name__ == "__main__":
     # Get directory of save file to load model from
-    assert len(sys.argv) == 2
-    model_save_file = sys.argv[1]
+    # assert len(sys.argv) == 2
+    # model_save_file = sys.argv[1]
 
     # Set up the two processes to run side-by-side
     browserConn, modelConn = Pipe(True)
 
     browserProc = Process(target=startBrowser, args=(browserConn,))
-    modelProc = Process(target=runClassifier, args=(modelConn, model_save_file))
+    modelProc = Process(target=runClassifier, args=(modelConn, ''))#model_save_file))
     modelProc.daemon = True
 
     modelProc.start()
@@ -54,3 +76,7 @@ if __name__ == "__main__":
 
     # Wait for user to close browser before terminating
     browserProc.join()
+
+    # Close the pipe connections
+    browserConn.close()
+    modelConn.close()
