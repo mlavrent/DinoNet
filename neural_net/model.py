@@ -1,112 +1,73 @@
 import tensorflow as tf
-import functools
+from PIL import Image
+import numpy as np
 from time import time
 import argparse
 from typing import Tuple, List
 from data_processing.data_processing import DataLoader
 
 
-def define_scope(function):
-    attribute = '_cache_' + function.__name__
+class Model(tf.keras.Model):
+    def __init__(self, loadFile: str = None):
+        super(Model, self).__init__()
 
-    @property
-    @functools.wraps(function)
-    def decorator(self):
-        if not hasattr(self, attribute):
-            with tf.variable_scope(function.__name):
-                setattr(self, attribute, function(self))
-        return getattr(self, attribute)
+        #TODO: transfer from above into here V
+        self.conv1 = tf.keras.layers.Conv2D(filters=10,
+                                            kernel_size=(10, 30),
+                                            strides=(1, 30),
+                                            padding="same",
+                                            data_format="channels_last",
+                                            activation=tf.keras.activations.relu,
+                                            use_bias=True,
+                                            kernel_initializer=tf.keras.initializers.glorot_normal,
+                                            bias_initializer=tf.keras.initializers.zeros)
 
-    return decorator
+        self.pool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
+                                               strides=(2, 1),
+                                               padding="same",
+                                               data_format="channels_last")
 
+        self.conv2 = tf.keras.layers.Conv2D(filters=10,
+                                            kernel_size=(4, 1),
+                                            strides=(2, 1),
+                                            padding="same",
+                                            data_format="channels_last",
+                                            activation=tf.keras.activations.relu,
+                                            use_bias=True,
+                                            kernel_initializer=tf.keras.initializers.glorot_normal,
+                                            bias_initializer=tf.keras.initializers.zeros)
 
-def conv_layer(input, filter_size: Tuple[int, int], step: Tuple[int, int], channels_in: int, channels_out: int):
+        self.pool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
+                                               strides=(2, 1),
+                                               padding="same",
+                                               data_format="channels_last")
 
-    W = tf.Variable(tf.truncated_normal([filter_size[0], filter_size[1], channels_in, channels_out], stddev=0.1))
-    b = tf.Variable(tf.constant(0., shape=[channels_out]))
-    conv = tf.nn.conv2d(input, W, strides=[step[0], step[1], 1, 1], padding="SAME")
-    activation = tf.nn.relu(conv + b)
+        self.flattened = tf.keras.layers.Flatten(data_format="channels_last")
 
-    tf.summary.histogram("weights", W)
-    tf.summary.histogram("biases", b)
-    tf.summary.histogram("act", activation)
-    return activation
+        self.fcl1 = tf.keras.layers.Dense(units=500,
+                                          activation=tf.keras.activations.softmax,
+                                          use_bias=True,
+                                          kernel_initializer=tf.keras.initializers.glorot_normal,
+                                          bias_initializer=tf.keras.initializers.zeros)
 
+        self.fcl2 = tf.keras.layers.Dense(units=4,
+                                          activation=tf.keras.activations.softmax,
+                                          use_bias=True,
+                                          kernel_initializer=tf.keras.initializers.glorot_normal,
+                                          bias_initializer=tf.keras.initializers.zeros)
 
-def fc_layer(input, channels_in, channels_out):
-    W = tf.Variable(tf.truncated_normal([channels_in, channels_out], stddev=0.1), name="W")
-    b = tf.Variable(tf.constant(0.1, shape=[channels_out]), name="b")
-    ff = tf.matmul(input, W) + b
-    activation = tf.nn.relu(ff)
+        if loadFile is not None:
+            self.load_weights(loadFile)
 
-    return activation
+    def call(self, inputs, training: bool = False):
+        conv1 = self.conv1(inputs)
+        pool1 = self.pool1(conv1)
+        conv2 = self.conv2(pool1)
+        pool2 = self.pool2(conv2)
 
-
-class Model:
-    def __init__(self, dataLoader: DataLoader, inShape: List[int], outShape: List[int], saveDir: str):
-        self.dataLoader = dataLoader
-        self.x = tf.placeholder(tf.float32, inShape, name="x")
-        self.y = tf.placeholder(tf.float32, outShape, name="y")
-        self.prediction
-        self.optimizer
-        self.error
-
-        self.saveDir = saveDir
-
-    @define_scope
-    def prediction(self):
-        #x = tf.placeholder(tf.float32, shape=(120, 30, 1), name="x")  # size: (120, 30, 1) x1
-
-        conv1 = conv_layer(self.x, (10, 30), (1, 30), 1, 10)  # size: (120, 1, 1) x10
-        pool1 = tf.nn.max_pool(conv1, (2, 1, 1, 1), (2, 1, 1, 1), padding="SAME")  # size: (60, 1, 1) x10
-
-        conv2 = conv_layer(pool1, (4, 1), (2, 1), 10, 10)  # size: (30, 1, 1) x10
-        pool2 = tf.nn.max_pool(conv2, (2, 1, 1, 1), (2, 1, 1, 1), padding="SAME")  # size: (15, 1, 1) x10
-
-        flattened = tf.reshape(pool2, (-1))
-
-        fcl1 = fc_layer(flattened, 150, 500)
-        fcl2 = fc_layer(fcl1, 500, 4)
-
-        return fcl2
-
-    @define_scope
-    def optimize(self):
-        xent = - tf.reduce_sum(self.y, tf.log(self.prediction))
-        optimizer = tf.train.AdamOptimizer(0.03)
-        return optimizer.minimize(xent)
-
-    @define_scope
-    def error(self):
-        mistakes = tf.not_equal(tf.argmax(self.y, 1), tf.argmax(self.prediction, 1))
-        return tf.reduce_mean(tf.cast(mistakes, tf.float32))
-
-    def train(self, numBatches: int, batchSize: int, sess,
-              modelNum=1, tbLogDir: str = None):
-
-        # Set up tensorboard
-        if tbLogDir:
-            writer = tf.summary.FileWriter(tbLogDir + str(modelNum))
-            writer.add_graph(sess.graph)
-            merged_summary = tf.summary.merge_all()
-
-        # Create saver to checkpoint our training
-        saver = tf.train.Saver(max_to_keep=5)
-
-        # Initialize variables
-        sess.run(tf.global_variables_initializer())
-
-        # Helper variables for logging
-        startTime = lastLog = time()
-
-        for i in range(numBatches):
-
-            # Report accuracy every 120 seconds
-            if time() - lastLog > 120:
-                print("Step {}: Training accuracy: {}".format(i, 1 - self.error))
-
-            sess.run(self.optimize(), feed_dict={'x': ..., 'y': ...})
-
+        flattened = self.flattened(pool2)
+        fcl1 = self.fcl1(flattened)
+        return self.fcl2(fcl1)
 
 # returns list of (action, value) tuples where action is one of:
 #   - "train": int value, number of epochs to train for
