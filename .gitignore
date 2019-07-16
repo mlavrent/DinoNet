@@ -4,6 +4,7 @@
 
 # Data files
 data/
+logs/
 
 # Compiled files
 *.py[cod]
