@@ -1,4 +1,5 @@
 from PIL import Image
+from tensorflow.keras.utils import Sequence
 import numpy as np
 import random
 import csv
@@ -61,11 +62,16 @@ class DataFile:
         self.file.close()
 
 
-class DataLoader:
-    def __init__(self, datasetNames: List[str]):
+class DataLoader(Sequence):
+    def __init__(self, datasetNames: List[str], batchSize: int):
+        self.batchSize = batchSize
+
         self.imgFiles = []
         for datasetName in datasetNames:
             self.imgFiles.append(DataFile(datasetName))
+
+        self.allData = self.load_all_data_random_order()
+        self.datasetSize = len(self.allData)
 
     def load_all_data(self) -> List[Datum]:
         data = []
@@ -79,32 +85,17 @@ class DataLoader:
         random.shuffle(data)
         return data
 
-    #TODO: switch over to using tf.keras.utils.Sequence for multiprocessing-safety
+    def __getitem__(self, i: int) -> List[Datum]:
+        # Get the batch
+        if i + self.batchSize > self.datasetSize:
+            # If needed, wrap around to start of data list
+            batchData = self.allData[i:] + self.allData[:self.datasetSize - i]
+        else:
+            batchData = self.allData[i:i + self.batchSize]
 
-    def batch_generator(self, batchSize) -> List[Datum]:
-        allData = self.load_all_data_random_order()
-        datasetSize = len(allData)
+        return batchData
 
-        i = 0
-        while True:
-            # Get the batch
-            if i + batchSize > datasetSize:
-                # If needed, wrap around to start of data list
-                batchData = allData[i:] + allData[:datasetSize - i]
-            else:
-                batchData = allData[i:i + batchSize]
-
-            # Yield the batch out
-            yield batchData
-
-            # Increment the position
-            i += batchSize
-            if i >= len(allData):
-                # If over, wrap around and re-shuffle the dataset
-                i %= datasetSize
-                random.shuffle(allData)
-
-    def size(self) -> int:
+    def __len__(self) -> int:
         return len(self.load_all_data())
 
     def close_data(self):
