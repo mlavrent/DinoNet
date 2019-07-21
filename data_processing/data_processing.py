@@ -3,7 +3,8 @@ from tensorflow.keras.utils import Sequence
 import numpy as np
 import random
 import csv
-from typing import List, Generator
+import math
+from typing import List, Tuple
 
 
 baseLabelDir: str = "data/images/labels/"
@@ -66,37 +67,23 @@ class DataLoader(Sequence):
     def __init__(self, datasetNames: List[str], batchSize: int):
         self.batchSize = batchSize
 
-        self.imgFiles = []
+        self.dataList = []
         for datasetName in datasetNames:
-            self.imgFiles.append(DataFile(datasetName))
+            dataFile = DataFile(datasetName)
 
-        self.allData = self.load_all_data_random_order()
+            for dataPoint in dataFile.next_row():
+                self.dataList.append(dataPoint)
+
+        random.shuffle(self.dataList)
+
         self.datasetSize = len(self.allData)
 
-    def load_all_data(self) -> List[Datum]:
-        data = []
-        for file in self.imgFiles:
-            for datum in file.next_row():
-                data.append(datum)
-        return data
-
-    def load_all_data_random_order(self) -> List[Datum]:
-        data = self.load_all_data()
-        random.shuffle(data)
-        return data
-
-    def __getitem__(self, i: int) -> List[Datum]:
-        # Get the batch
-        if i + self.batchSize > self.datasetSize:
-            # If needed, wrap around to start of data list
-            batchData = self.allData[i:] + self.allData[:self.datasetSize - i]
-        else:
-            batchData = self.allData[i:i + self.batchSize]
-
-        return batchData
+    def __getitem__(self, i: int) -> List[Tuple[np.ndarray, np.ndarray]]:
+        batch = self.dataList[(i % self.datasetSize) * self.batchSize:]
+        return [(d.get_input(), d.get_target()) for d in batch]
 
     def __len__(self) -> int:
-        return len(self.load_all_data())
+        return math.ceil(len(self.load_all_data())/self.batchSize)
 
     def close_data(self):
         for file in self.imgFiles:
