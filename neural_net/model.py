@@ -109,7 +109,7 @@ if __name__ == "__main__":
     model.compile(tf.keras.optimizers.Adam(learning_rate=0.001,), tf.losses.binary_crossentropy)
 
     # Create Data Loader
-    dataLoader = DataLoader(["game4"])
+    dataLoader = DataLoader(["game4"], batchSize=100)
 
     # Actions, in order they should be performed
     actions = parse_args()
@@ -121,7 +121,6 @@ if __name__ == "__main__":
 
         elif action == "train":
             print("Training model for {} epochs".format(value))
-            batchSize = 100
 
             # Set up tensorboard logger
             tbLogger = tf.keras.callbacks.TensorBoard(log_dir="./logs",
@@ -136,9 +135,7 @@ if __name__ == "__main__":
                                                       update_freq="batch",
                                                       profile_batch=2)
 
-            #TODO: fill in the .fit() call below
-            model.fit_generator(generator=dataLoader.batch_generator(batchSize),
-                                steps_per_epoch=int(dataLoader.size()/batchSize),
+            model.fit_generator(generator=dataLoader,
                                 epochs=value,
                                 verbose=2,
                                 callbacks=[tbLogger],
