@@ -4,7 +4,7 @@ import numpy as np
 import random
 import csv
 import math
-from typing import List, Tuple
+from typing import List, Generator, Tuple
 
 
 baseLabelDir: str = "data/images/labels/"
@@ -25,7 +25,7 @@ class Datum:
         # load image only when needed
         pilImg = Image.open(self.fileName).convert('LA')
         imgArr = np.array(pilImg)
-        normImgArr = self.imgArr / 255
+        normImgArr = imgArr / 255
 
         return normImgArr
 
@@ -76,14 +76,14 @@ class DataLoader(Sequence):
 
         random.shuffle(self.dataList)
 
-        self.datasetSize = len(self.allData)
+        self.datasetSize = len(self.dataList)
 
-    def __getitem__(self, i: int) -> List[Tuple[np.ndarray, np.ndarray]]:
+    def __getitem__(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
         batch = self.dataList[(i % self.datasetSize) * self.batchSize:]
-        return [(d.get_input(), d.get_target()) for d in batch]
+        return np.array([d.get_input() for d in batch]), np.array([d.get_target() for d in batch])
 
     def __len__(self) -> int:
-        return math.ceil(len(self.load_all_data())/self.batchSize)
+        return math.ceil(len(self.dataList)/self.batchSize)
 
     def close_data(self):
         for file in self.imgFiles:
@@ -93,4 +93,4 @@ class DataLoader(Sequence):
 if __name__ == "__main__":
     # Test data loader
     loader = DataLoader(["game4"])
-    print(loader.load_all_data())
+    print(loader.dataList)
