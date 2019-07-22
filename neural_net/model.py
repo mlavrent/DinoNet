@@ -106,10 +106,11 @@ def parse_args():
 if __name__ == "__main__":
     # Create the model
     model = Model()
+    model.run_eagerly = False
     model.compile(tf.keras.optimizers.Adam(learning_rate=0.001,), tf.losses.binary_crossentropy)
 
     # Create Data Loader
-    dataLoader = DataLoader(["game4"], batchSize=100)
+    dataLoader = DataLoader(["game4", "game5"], batchSize=100)
 
     # Actions, in order they should be performed
     actions = parse_args()
@@ -123,7 +124,7 @@ if __name__ == "__main__":
             print("Training model for {} epochs".format(value))
 
             # Set up tensorboard logger
-            tbLogger = tf.keras.callbacks.TensorBoard(log_dir="./logs",
+            tbLogger = tf.keras.callbacks.TensorBoard(log_dir=".\logs",
                                                       histogram_freq=0,
                                                       write_graph=True,
                                                       write_grads=False,
@@ -133,7 +134,7 @@ if __name__ == "__main__":
                                                       embeddings_metadata=None,
                                                       embeddings_data=None,
                                                       update_freq="batch",
-                                                      profile_batch=2)
+                                                      profile_batch=0)
 
             model.fit_generator(generator=dataLoader,
                                 epochs=value,
@@ -151,7 +152,7 @@ if __name__ == "__main__":
 
         elif action == "save":
             print("Saving model to {}".format(value))
-            model.save(value)
+            model.save(value, overwrite=True)
 
         else:
             raise LookupError("Unknown action requested")
