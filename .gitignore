@@ -5,6 +5,7 @@
 # Data files
 data/
 logs/
+saved_models/
 
 # Compiled files
 *.py[cod]
