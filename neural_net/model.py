@@ -98,7 +98,7 @@ def parse_args():
         returnables.append(("eval", args["eval"]))
 
     # Add save arg to returnable
-    returnables.append(("save", args["save"]))
+    returnables.append(("save", args["save"].replace("/", "\\")))
 
     return returnables
 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     for action, value in actions:
         if action == "load":
             print("Loading model from {}".format(value))
-            model.load_trained_model(value)
+            model.load_weights(value)
 
         elif action == "train":
             print("Training model for {} epochs".format(value))
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
         elif action == "save":
             print("Saving model to {}".format(value))
-            model.save(value, overwrite=True)
+            model.save_weights(value, overwrite=True, save_format="tf")
 
         else:
             raise LookupError("Unknown action requested")
