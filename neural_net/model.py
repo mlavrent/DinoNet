@@ -156,6 +156,3 @@ if __name__ == "__main__":
 
         else:
             raise LookupError("Unknown action requested")
-
-    dataLoader.close_data()
-

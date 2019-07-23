@@ -74,6 +74,8 @@ class DataLoader(Sequence):
             for dataPoint in dataFile.next_row():
                 self.dataList.append(dataPoint)
 
+            dataFile.close()
+
         random.shuffle(self.dataList)
 
         self.datasetSize = len(self.dataList)
@@ -84,10 +86,6 @@ class DataLoader(Sequence):
 
     def __len__(self) -> int:
         return math.ceil(len(self.dataList)/self.batchSize)
-
-    def close_data(self):
-        for file in self.imgFiles:
-            file.close()
 
 
 if __name__ == "__main__":
