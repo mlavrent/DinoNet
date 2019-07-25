@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QLabel
 from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
+from random import shuffle
 import os
 import csv
 import sys
@@ -12,7 +13,11 @@ class MainWindow(QWidget):
         super().__init__()
 
         self.imgSet: str = imgSet
-        self.labelFile = "data/images/labels/" + imgSet + ".csv"
+        self.basePath = "data/images/labels/"
+        self.fileName = imgSet + ".csv"
+        self.trainLabelFile = "data/images/labels/training/" + imgSet + ".csv"
+        self.valLabelFile = "data/images/labels/validation/" + imgSet + ".csv"
+        self.testLabelFile = "data/images/labels/testing/" + imgSet + ".csv"
 
         self.curImg = 1
         self.inAir = False
@@ -76,24 +81,7 @@ class MainWindow(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape or event.key() == Qt.Key_Q:
-            with open(self.labelFile, 'w', newline='') as file:
-                header = ['file', 'time', 'jump', 'inAir', 'duck', 'isDucked']
-                writer = csv.DictWriter(file, fieldnames=header)
-
-                writer.writeheader()
-                i = 0
-                for key in self.data.keys():
-                    rowdict = {
-                        'file': key,
-                        'time': i,
-                        'jump': self.data[key][0],
-                        'inAir': self.data[key][1],
-                        'duck': self.data[key][2],
-                        'isDucked': self.data[key][3],
-                    }
-                    writer.writerow(rowdict)
-                    i += self.interval
-
+            self.save_to_file(0.2, 0.2)
             self.close()
 
         elif event.key() == Qt.Key_W:
@@ -130,6 +118,51 @@ class MainWindow(QWidget):
             self.stateImg.clear()
 
         self.showImage()
+
+    def save_to_file(self, valPct: float, testPct: float):
+        assert 0 <= valPct <= 1, "Validation percentage must be valid (between 0 and 1)"
+        assert 0 <= testPct <= 1,  "Test percentage must be valid (between 0 and 1)"
+        assert (valPct + testPct) <= 1, "Sum of validation and test percentage cannot exceed 1"
+
+        valSize = len(self.data) * valPct
+        testSize = len(self.data) * testPct
+
+        trainFName = self.basePath + "training/" + self.fileName
+        valFName = self.basePath + "validation/" + self.fileName
+        testFName = self.basePath + "testing/" + self.fileName
+
+        with open(trainFName, 'w', newline='') as trainFile, \
+             open(valFName, 'w', newline='') as valFile, \
+             open(testFName, 'w', newline='') as testFile:
+
+            header = ['file', 'time', 'jump', 'inAir', 'duck', 'isDucked']
+            trainWriter = csv.DictWriter(trainFile, fieldnames=header)
+            valWriter = csv.DictWriter(valFile, fieldnames=header)
+            testWriter = csv.DictWriter(testFile, fieldnames=header)
+
+            trainWriter.writeheader()
+            valWriter.writeheader()
+            testWriter.writeheader()
+
+            i = 0
+            rows = []
+            for key in self.data.keys():
+                rowdict = {
+                    'file': key,
+                    'time': i,
+                    'jump': self.data[key][0],
+                    'inAir': self.data[key][1],
+                    'duck': self.data[key][2],
+                    'isDucked': self.data[key][3],
+                }
+                rows.append(rowdict)
+                i += self.interval
+
+            shuffle(rows)
+
+            testWriter.writerows(rows[:testSize])
+            valWriter.writerows(rows[testSize:testSize + valSize])
+            trainWriter.writerows(rows[testSize + valSize:])
 
 
 def run(imgSet: str, fps: float = 10):
