@@ -124,8 +124,8 @@ class MainWindow(QWidget):
         assert 0 <= testPct <= 1,  "Test percentage must be valid (between 0 and 1)"
         assert (valPct + testPct) <= 1, "Sum of validation and test percentage cannot exceed 1"
 
-        valSize = len(self.data) * valPct
-        testSize = len(self.data) * testPct
+        valSize = int(len(self.data) * valPct)
+        testSize = int(len(self.data) * testPct)
 
         trainFName = self.basePath + "training/" + self.fileName
         valFName = self.basePath + "validation/" + self.fileName
