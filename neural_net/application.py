@@ -1,7 +1,7 @@
 from selenium import webdriver
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
-#from neural_net.model import Model
+from neural_net.model import Model
 from PIL import Image
 from io import BytesIO
 import base64
@@ -43,15 +43,15 @@ def startBrowser(conn: Connection):
 
 def runClassifier(conn: Connection, model_save_file: str):
     logMessage("Starting model")
-
-    # model = Model(loadFile=model_save_file)
+    model = Model()
+    model.load_weights(model_save_file)
     logMessage("Model loaded")
 
     while True:
         try:
             input_img = conn.recv()
-            # result = model.predict(input_img)
-            # conn.send(result)
+            result = model.predict(input_img)
+            conn.send(result)
         except EOFError:
             break
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     browserConn, modelConn = Pipe(True)
 
     browserProc = Process(target=startBrowser, args=(browserConn,))
-    modelProc = Process(target=runClassifier, args=(modelConn, ''))#model_save_file))
+    modelProc = Process(target=runClassifier, args=(modelConn, "saved_models/dinoModel"))
     modelProc.daemon = True
 
     modelProc.start()
