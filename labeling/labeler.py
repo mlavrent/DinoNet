@@ -15,9 +15,6 @@ class MainWindow(QWidget):
         self.imgSet: str = imgSet
         self.basePath = "data/images/labels/"
         self.fileName = imgSet + ".csv"
-        self.trainLabelFile = "data/images/labels/training/" + imgSet + ".csv"
-        self.valLabelFile = "data/images/labels/validation/" + imgSet + ".csv"
-        self.testLabelFile = "data/images/labels/testing/" + imgSet + ".csv"
 
         self.curImg = 1
         self.inAir = False
@@ -130,6 +127,11 @@ class MainWindow(QWidget):
         trainFName = self.basePath + "training/" + self.fileName
         valFName = self.basePath + "validation/" + self.fileName
         testFName = self.basePath + "testing/" + self.fileName
+
+        os.makedirs(self.basePath + "training/", exist_ok=True)
+        os.makedirs(self.basePath + "validation/", exist_ok=True)
+        os.makedirs(self.basePath + "testing/", exist_ok=True)
+
 
         with open(trainFName, 'w', newline='') as trainFile, \
              open(valFName, 'w', newline='') as valFile, \
