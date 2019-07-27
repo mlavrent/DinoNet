@@ -4,11 +4,19 @@ import numpy as np
 import random
 import csv
 import math
+from enum import Enum
 from typing import List, Generator, Tuple
 
 
 baseLabelDir: str = "data/images/labels/"
 baseImgDir: str = "data/images/"
+
+
+class DataType(Enum):
+    TRAINING = "training/"
+    VALIDATION = "validation/"
+    TESTING = "testing/"
+    GENERAL = ""
 
 
 class Datum:
@@ -41,9 +49,9 @@ class Datum:
 
 
 class DataFile:
-    def __init__(self, datasetName: str):
+    def __init__(self, dataType: DataType, datasetName: str):
         self.datasetName = datasetName
-        self.filePath = baseLabelDir + datasetName + ".csv"
+        self.filePath = baseLabelDir + dataType.value + datasetName + ".csv"
 
         self.file = open(self.filePath, 'r', newline='')
         self.reader = csv.DictReader(self.file, delimiter=',')
@@ -64,12 +72,12 @@ class DataFile:
 
 
 class DataLoader(Sequence):
-    def __init__(self, datasetNames: List[str], batchSize: int):
+    def __init__(self, batchSize: int, dataType: DataType, datasetNames: List[str]):
         self.batchSize = batchSize
 
         self.dataList = []
         for datasetName in datasetNames:
-            dataFile = DataFile(datasetName)
+            dataFile = DataFile(dataType, datasetName)
 
             for dataPoint in dataFile.next_row():
                 self.dataList.append(dataPoint)
