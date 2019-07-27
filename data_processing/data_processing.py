@@ -35,7 +35,8 @@ class Datum:
         imgArr = np.array(pilImg)
         normImgArr = imgArr / 255
 
-        return normImgArr
+        # 50% of the time, invert image colors
+        return random.choice(normImgArr, 1 - normImgArr)
 
     def get_target(self):
         return np.array([self.jump, self.inAir, self.duck, self.isDucked])
@@ -72,7 +73,7 @@ class DataFile:
 
 
 class DataLoader(Sequence):
-    def __init__(self, batchSize: int, dataType: DataType, datasetNames: List[str]):
+    def __init__(self, datasetNames: List[str], dataType: DataType, batchSize: int):
         self.batchSize = batchSize
 
         self.dataList = []
