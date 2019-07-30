@@ -36,10 +36,12 @@ class Datum:
         normImgArr = imgArr / 255
 
         # 50% of the time, invert image colors
-        return random.choice(normImgArr, 1 - normImgArr)
+        return random.choice([normImgArr, 1 - normImgArr])
 
     def get_target(self):
-        return np.array([self.jump, self.inAir, self.duck, self.isDucked])
+        # return np.array([self.jump, self.inAir, self.duck, self.isDucked])
+        doNothing = not (self.jump or self.isDucked)
+        return np.array([self.jump, self.isDucked, doNothing])
 
     def __str__(self) -> str:
         actionSymbol = "↑" if self.jump else ("↓" if self.duck else "•")
