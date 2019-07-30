@@ -100,6 +100,22 @@ class DataLoader(Sequence):
 
 
 if __name__ == "__main__":
-    # Test data loader
-    loader = DataLoader(["game4"])
-    print(loader.dataList)
+    # Calculations for class weights
+    loader = DataLoader(["game1", "game2", "game3", "game4", "game5"], DataType.TRAINING, batchSize=10000)
+
+    jumpCt = 0
+    duckCt = 0
+    doNothingCt = 0
+    j = 0
+    for i, t in loader:
+        print(j)
+        j += 1
+        sums = np.sum(t, axis=0)
+        jumpCt += sums[0]
+        duckCt += sums[1]
+        doNothingCt += sums[2]
+
+    print("Jump: " + str(jumpCt))
+    print("Duck: " + str(duckCt))
+    print("Nothing: " + str(doNothingCt))
+
