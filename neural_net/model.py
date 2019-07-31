@@ -19,7 +19,7 @@ class Model(tf.keras.Model):
                                             data_format="channels_last",
                                             activation=tf.keras.activations.relu,
                                             use_bias=True,
-                                            kernel_initializer=tf.keras.initializers.glorot_normal,
+                                            kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
                                             bias_initializer=tf.keras.initializers.zeros)
 
         self.pool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
@@ -34,7 +34,7 @@ class Model(tf.keras.Model):
                                             data_format="channels_last",
                                             activation=tf.keras.activations.relu,
                                             use_bias=True,
-                                            kernel_initializer=tf.keras.initializers.glorot_normal,
+                                            kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
                                             bias_initializer=tf.keras.initializers.zeros)
 
         self.pool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
@@ -47,10 +47,12 @@ class Model(tf.keras.Model):
         self.fcl1 = tf.keras.layers.Dense(units=500,
                                           activation=tf.keras.activations.softmax,
                                           use_bias=True,
-                                          kernel_initializer=tf.keras.initializers.glorot_normal,
+                                          kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
                                           bias_initializer=tf.keras.initializers.zeros)
 
-        self.fcl2 = tf.keras.layers.Dense(units=4,
+        self.drop1 = tf.keras.layers.Dropout(rate=0.2)
+
+        self.fcl2 = tf.keras.layers.Dense(units=3,
                                           activation=tf.keras.activations.softmax,
                                           use_bias=True,
                                           kernel_initializer=tf.keras.initializers.glorot_normal,
@@ -66,8 +68,14 @@ class Model(tf.keras.Model):
         pool2 = self.pool2(conv2)
 
         flattened = self.flattened(pool2)
+
         fcl1 = self.fcl1(flattened)
-        return self.fcl2(fcl1)
+
+        if training:
+            fcl2 = self.fcl2(self.drop1(fcl1))
+        else:
+            fcl2 = self.fcl2(fcl1)
+        return fcl2
 
 # returns list of (action, value) tuples where action is one of:
 #   - "train": int value, number of epochs to train for
