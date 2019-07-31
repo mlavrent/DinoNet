@@ -1,17 +1,17 @@
 import tensorflow as tf
 from PIL import Image
 import numpy as np
-from time import time
+from datetime import datetime
+from random import randint
 import argparse
 from typing import Tuple, List
-from data_processing.data_processing import DataLoader
+from data_processing.data_processing import DataLoader, DataType
 
 
 class Model(tf.keras.Model):
-    def __init__(self, loadFile: str = None):
-        super(Model, self).__init__()
+    def __init__(self, loadFile: str = None, *args, **kwargs):
+        super(Model, self).__init__(*args, **kwargs)
 
-        #TODO: transfer from above into here V
         self.conv1 = tf.keras.layers.Conv2D(filters=10,
                                             kernel_size=(10, 30),
                                             strides=(1, 30),
@@ -106,8 +106,10 @@ def parse_args():
 if __name__ == "__main__":
     # Create the model
     model = Model()
-    model.run_eagerly = False
-    model.compile(tf.keras.optimizers.Adam(learning_rate=0.001,), tf.losses.binary_crossentropy)
+    # model._run_eagerly = False
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.05),
+                  loss=tf.keras.losses.MeanSquaredError(),
+                  metrics=["accuracy"])
 
     # Create Data Loader
     dataLoader = DataLoader(["game4", "game5"], batchSize=100)
