@@ -120,7 +120,9 @@ if __name__ == "__main__":
                   metrics=["accuracy"])
 
     # Create Data Loader
-    dataLoader = DataLoader(["game4", "game5"], batchSize=100)
+    datasets = ["game1", "game2", "game3", "game4", "game5"]
+    trainData = DataLoader(datasets, DataType.TRAINING, batchSize=100)
+    valData = DataLoader(datasets, DataType.VALIDATION, batchSize=500)
 
     # Actions, in order they should be performed
     actions = parse_args()
@@ -133,24 +135,26 @@ if __name__ == "__main__":
         elif action == "train":
             print("Training model for {} epochs".format(value))
 
-            # Set up tensorboard logger
-            tbLogger = tf.keras.callbacks.TensorBoard(log_dir=".\logs",
-                                                      histogram_freq=0,
-                                                      write_graph=True,
-                                                      write_grads=False,
-                                                      write_images=True,
-                                                      embeddings_freq=0,
-                                                      embeddings_layer_names=None,
-                                                      embeddings_metadata=None,
-                                                      embeddings_data=None,
-                                                      update_freq="batch",
-                                                      profile_batch=0)
+            # Set up tensorboard for logging
+            logDir = "logs\\adam-lr0.05\\" + datetime.now().strftime("%Y%m%d-%H%M%S")
+            tbCallback = tf.keras.callbacks.TensorBoard(log_dir=logDir, histogram_freq=0, profile_batch=0)
 
-            model.fit_generator(generator=dataLoader,
+            # Set up early stopping to prevent overfitting
+            earlyStopping = tf.keras.callbacks.EarlyStopping(monitor="val_acc",
+                                                             min_delta=0.001,
+                                                             patience=5,
+                                                             mode="auto",
+                                                             restore_best_weights=True)
+
+            model.fit_generator(generator=trainData,
                                 epochs=value,
                                 verbose=2,
-                                callbacks=[tbLogger],
-                                workers=2,
+                                callbacks=[tbCallback],
+                                validation_data=valData,
+                                validation_steps=1,
+                                validation_freq=1,
+                                class_weight={0: 12.6, 1: 37.7, 2: 1.12},
+                                workers=3,
                                 use_multiprocessing=True,
                                 shuffle=True,)
 
