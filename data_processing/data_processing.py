@@ -31,8 +31,9 @@ class Datum:
 
     def get_input(self):
         # load image only when needed
-        pilImg = Image.open(self.fileName).convert('LA')
-        imgArr = np.array(pilImg)
+        pilImg = Image.open(self.fileName).convert('L')
+        # Add 1-channel for tf to deal with
+        imgArr = np.array(pilImg).reshape((pilImg.size[1], pilImg.size[0], 1))
         normImgArr = imgArr / 255
 
         # 50% of the time, invert image colors
