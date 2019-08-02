@@ -2,10 +2,18 @@ from selenium import webdriver
 from multiprocessing import Process, Pipe
 from multiprocessing.connection import Connection
 from neural_net.model import Model
+import numpy as np
 from PIL import Image
+from enum import Enum
 from io import BytesIO
 import base64
 import time
+
+
+class Action(Enum):
+    JUMP = 0
+    DUCK = 1
+    DO_NOTHING = 2
 
 
 def logMessage(message: str):
@@ -30,10 +38,15 @@ def startBrowser(conn: Connection):
     # Run browser until user closes it
     while True:
         # Take screenshot and send it
-        sshot_str = driver.get_screenshot_as_base64()
+        sshotStr = driver.get_screenshot_as_base64()
 
-        if sshot_str is not None:
-            img = Image.open(BytesIO(base64.b64decode(sshot_str)))
+        if sshotStr is not None:
+            img = Image.open(BytesIO(base64.b64decode(sshotStr))).convert('L')
+            conn.send(img)
+            logMessage("Screenshot sent")
+
+            result = conn.recv()
+            logMessage(result.name)
         else:
             break
 
@@ -44,14 +57,27 @@ def startBrowser(conn: Connection):
 def runClassifier(conn: Connection, model_save_file: str):
     logMessage("Starting model")
     model = Model()
-    model.load_weights(model_save_file)
+    model.load_weights(model_save_file).expect_partial()
     logMessage("Model loaded")
 
     while True:
         try:
-            input_img = conn.recv()
-            result = model.predict(input_img)
-            conn.send(result)
+            img = conn.recv()
+            imgArr = np.array(img).reshape((1, img.size[1], img.size[0], 1)) / 255
+            print(imgArr.shape)
+
+            logMessage("Screenshot received")
+
+            aResult = model.predict(imgArr)
+            iResult = np.amax(aResult)
+            if iResult == 0:
+                conn.send(Action.JUMP)
+            elif iResult == 1:
+                conn.send(Action.DUCK)
+            else:
+                conn.send(Action.DO_NOTHING)
+
+            logMessage("Result sent")
         except EOFError:
             break
 
@@ -68,7 +94,7 @@ if __name__ == "__main__":
     browserConn, modelConn = Pipe(True)
 
     browserProc = Process(target=startBrowser, args=(browserConn,))
-    modelProc = Process(target=runClassifier, args=(modelConn, "saved_models/dinoModel"))
+    modelProc = Process(target=runClassifier, args=(modelConn, "saved_models/adam-lr0.005/dinoModel"))
     modelProc.daemon = True
 
     modelProc.start()
