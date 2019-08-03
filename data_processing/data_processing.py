@@ -19,6 +19,13 @@ class DataType(Enum):
     GENERAL = ""
 
 
+def loadImage(fileName: str):
+    pilImg = Image.open(fileName).convert("L")
+    imgArr = np.array(pilImg).reshape((pilImg.size[1], pilImg.size[0], 1)) / 255
+
+    return pilImg, imgArr
+
+
 class Datum:
     def __init__(self, fileName: str, time: float, jump: bool, inAir: bool, duck: bool, isDucked: bool):
         self.fileName = fileName
@@ -31,13 +38,10 @@ class Datum:
 
     def get_input(self):
         # load image only when needed
-        pilImg = Image.open(self.fileName).convert('L')
-        # Add 1-channel for tf to deal with
-        imgArr = np.array(pilImg).reshape((pilImg.size[1], pilImg.size[0], 1))
-        normImgArr = imgArr / 255
+        _, imgArr = loadImage(self.fileName)
 
         # 50% of the time, invert image colors
-        return random.choice([normImgArr, 1 - normImgArr])
+        return random.choice([imgArr, 1 - imgArr])
 
     def get_target(self):
         # return np.array([self.jump, self.inAir, self.duck, self.isDucked])
