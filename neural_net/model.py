@@ -5,7 +5,7 @@ from datetime import datetime
 from random import randint
 import argparse
 from typing import Tuple, List
-from data_processing.data_processing import DataLoader, DataType
+from data_processing.data_processing import DataLoader, DataType, loadImage
 
 
 class Model(tf.keras.Model):
@@ -90,7 +90,7 @@ def parse_args():
 
     # Args for loading/saving model
     parser.add_argument("--load", required=False, help="File to load stored model from.")
-    parser.add_argument("--save", required=False, default="saved_models/")
+    parser.add_argument("--save", required=False)
 
     args = vars(parser.parse_args())
     returnables = []
@@ -104,9 +104,8 @@ def parse_args():
         returnables.append(("train", args["train"]))
     if args["eval"] is not None:
         returnables.append(("eval", args["eval"]))
-
-    # Add save arg to returnable
-    returnables.append(("save", args["save"].replace("/", "\\")))
+    if args["save"] is not None:
+        returnables.append(("save", args["save"].replace("/", "\\")))
 
     return returnables
 
@@ -154,13 +153,14 @@ if __name__ == "__main__":
                                 validation_steps=1,
                                 validation_freq=1,
                                 class_weight={0: 12.6, 1: 37.7, 2: 1.12},
-                                workers=3,
+                                workers=2,
                                 use_multiprocessing=True,
                                 shuffle=True,)
 
         elif action == "eval":
-            imgData = np.array(Image.open(value))
-            output = model.predict(imgData)
+            pilImg, _ = loadImage(value)
+            imgArr = np.array(pilImg).reshape((1, pilImg.size[1], pilImg.size[0], 2)) / 255
+            output = model.predict(imgArr)
 
             print("Evaluating on image at {}. Output: {}".format(value, output))
 
