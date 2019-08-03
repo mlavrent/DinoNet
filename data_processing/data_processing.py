@@ -5,7 +5,7 @@ import random
 import csv
 import math
 from enum import Enum
-from typing import List, Generator, Tuple
+from typing import List, Generator, Tuple, Optional
 
 
 baseLabelDir: str = "data/images/labels/"
@@ -80,9 +80,7 @@ class DataFile:
 
 
 class DataLoader(Sequence):
-    def __init__(self, datasetNames: List[str], dataType: DataType, batchSize: int):
-        self.batchSize = batchSize
-
+    def __init__(self, datasetNames: List[str], dataType: DataType, batchSize: Optional[int]):
         self.dataList = []
         for datasetName in datasetNames:
             dataFile = DataFile(dataType, datasetName)
@@ -95,6 +93,7 @@ class DataLoader(Sequence):
         random.shuffle(self.dataList)
 
         self.datasetSize = len(self.dataList)
+        self.batchSize = self.datasetSize if batchSize is None else batchSize
 
     def __getitem__(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
         batch = self.dataList[(i % self.datasetSize) * self.batchSize:]
