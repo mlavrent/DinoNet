@@ -34,6 +34,7 @@ def startBrowser(conn: Connection):
 
     time.sleep(3)
     body.send_keys(" ")
+    time.sleep(3)  # Wait until it goes to full screen
 
     # Run browser until user closes it
     while True:
@@ -41,7 +42,9 @@ def startBrowser(conn: Connection):
         sshotStr = driver.get_screenshot_as_base64()
 
         if sshotStr is not None:
-            img = Image.open(BytesIO(base64.b64decode(sshotStr))).convert('L')
+            img = Image.open(BytesIO(base64.b64decode(sshotStr))).convert('LA')
+            img = img.crop(box=(0, 285, 1920, 765))  # box from (0, 285) to (1920, 765) that's 1920x480
+            img = img.resize((120, 30), resample=Image.BILINEAR)  # resize down to 120x30
             conn.send(img)
             logMessage("Screenshot sent")
 
@@ -63,10 +66,7 @@ def runClassifier(conn: Connection, model_save_file: str):
     while True:
         try:
             img = conn.recv()
-            imgArr = np.array(img).reshape((1, img.size[1], img.size[0], 1)) / 255
-            print(imgArr.shape)
-
-            logMessage("Screenshot received")
+            imgArr = np.array(img).reshape((1, img.size[1], img.size[0], 2)) / 255
 
             aResult = model.predict(imgArr)
             iResult = np.amax(aResult)
