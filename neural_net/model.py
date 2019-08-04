@@ -87,6 +87,7 @@ def parse_args():
     action_group = parser.add_mutually_exclusive_group(required=True)
     action_group.add_argument("--train", required=False, type=int, help="Number of epochs to train for.")
     action_group.add_argument("--eval", required=False, help="Image file to evaluate model on.")
+    action_group.add_argument("--test", action="store_true")
 
     # Args for loading/saving model
     parser.add_argument("--load", required=False, help="File to load stored model from.")
@@ -98,14 +99,16 @@ def parse_args():
     # Add load arg to returnable
     if args["load"] is not None:
         returnables.append(("load", args["load"]))
+    if args["save"] is not None:
+        returnables.append(("save", args["save"].replace("/", "\\")))
 
     # Add actions to returnable
     if args["train"] is not None:
         returnables.append(("train", args["train"]))
     if args["eval"] is not None:
         returnables.append(("eval", args["eval"]))
-    if args["save"] is not None:
-        returnables.append(("save", args["save"].replace("/", "\\")))
+    if args["test"]:
+        returnables.append(("test", True))
 
     return returnables
 
@@ -158,11 +161,20 @@ if __name__ == "__main__":
                                 shuffle=True,)
 
         elif action == "eval":
+            print("Evaluating on image at {}.".format(value))
+
             pilImg, _ = loadImage(value)
             imgArr = np.array(pilImg).reshape((1, pilImg.size[1], pilImg.size[0], 2)) / 255
             output = model.predict(imgArr)
 
-            print("Evaluating on image at {}. Output: {}".format(value, output))
+            print("Output: {}".format(value, output))
+
+        elif action == "test":
+            testData = DataLoader(datasets, DataType.TESTING, batchSize=None)
+
+            print("Metrics for test dataset:")
+            for v, n in zip(model.evaluate_generator(testData), model.metrics_names):
+                print("{}: {:.3f}".format(n, v))
 
         elif action == "save":
             print("Saving model to {}".format(value))
