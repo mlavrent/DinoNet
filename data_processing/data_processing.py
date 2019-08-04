@@ -100,7 +100,7 @@ class DataLoader(Sequence):
         return np.array([d.get_input() for d in batch]), np.array([d.get_target() for d in batch])
 
     def __len__(self) -> int:
-        return math.ceil(len(self.dataList)/self.batchSize)
+        return math.ceil(self.datasetSize/self.batchSize)
 
 
 if __name__ == "__main__":
