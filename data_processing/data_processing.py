@@ -110,16 +110,14 @@ if __name__ == "__main__":
     jumpCt = 0
     duckCt = 0
     doNothingCt = 0
-    j = 0
-    for i, t in loader:
-        print(j)
-        j += 1
-        sums = np.sum(t, axis=0)
+    total = loader.datasetSize
+    for inputs, targets in loader:
+        sums = np.sum(targets, axis=0)
         jumpCt += sums[0]
         duckCt += sums[1]
         doNothingCt += sums[2]
 
-    print("Jump: " + str(jumpCt))
-    print("Duck: " + str(duckCt))
-    print("Nothing: " + str(doNothingCt))
+    print("Jump: {:d}/{:d} ({:.1f}%)".format(jumpCt, total, 100 * (jumpCt/total)))
+    print("Duck: {:d}/{:d} ({:.1f}%)".format(duckCt, total, 100 * (duckCt/total)))
+    print("Nothing: {:d}/{:d} ({:.1f}%)".format(doNothingCt, total, 100 * (doNothingCt/total)))
 
