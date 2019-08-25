@@ -117,9 +117,9 @@ if __name__ == "__main__":
     # Create the model
     model = Model()
     # model._run_eagerly = False
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.05),
-                  loss=tf.keras.losses.MeanSquaredError(),
-                  metrics=["accuracy"])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.005),
+                  loss=tf.keras.losses.CategoricalCrossentropy(),
+                  metrics=[tf.keras.metrics.CategoricalAccuracy()])
 
     # Create Data Loader
     datasets = ["game1", "game2", "game3", "game4", "game5"]
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             print("Training model for {} epochs".format(value))
 
             # Set up tensorboard for logging
-            logDir = "logs\\adam-lr0.05\\" + datetime.now().strftime("%Y%m%d-%H%M%S")
+            logDir = "logs\\dinoModel\\" + datetime.now().strftime("%Y%m%d-%H%M%S")
             tbCallback = tf.keras.callbacks.TensorBoard(log_dir=logDir, histogram_freq=0, profile_batch=0)
 
             # Set up early stopping to prevent overfitting
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                                 validation_data=valData,
                                 validation_steps=1,
                                 validation_freq=1,
-                                class_weight={0: 12.6, 1: 37.7, 2: 1.12},
+                                class_weight={0: 1/8.0, 1: 1/2.7, 2: 1/89.4},
                                 workers=2,
                                 use_multiprocessing=True,
                                 shuffle=True,)
