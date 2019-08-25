@@ -17,9 +17,9 @@ class Model(tf.keras.Model):
                                             strides=(1, 30),
                                             padding="same",
                                             data_format="channels_last",
-                                            activation=tf.keras.activations.relu,
+                                            activation=tf.keras.activations.softmax,
                                             use_bias=True,
-                                            kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
+                                            kernel_initializer=tf.keras.initializers.glorot_normal,
                                             bias_initializer=tf.keras.initializers.zeros)
 
         self.pool1 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
@@ -32,9 +32,9 @@ class Model(tf.keras.Model):
                                             strides=(2, 1),
                                             padding="same",
                                             data_format="channels_last",
-                                            activation=tf.keras.activations.relu,
+                                            activation=tf.keras.activations.softmax,
                                             use_bias=True,
-                                            kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
+                                            kernel_initializer=tf.keras.initializers.glorot_normal,
                                             bias_initializer=tf.keras.initializers.zeros)
 
         self.pool2 = tf.keras.layers.MaxPool2D(pool_size=(2, 1),
@@ -47,7 +47,7 @@ class Model(tf.keras.Model):
         self.fcl1 = tf.keras.layers.Dense(units=500,
                                           activation=tf.keras.activations.softmax,
                                           use_bias=True,
-                                          kernel_initializer=tf.keras.initializers.glorot_normal(seed=randint(0, 100)),
+                                          kernel_initializer=tf.keras.initializers.glorot_normal,
                                           bias_initializer=tf.keras.initializers.zeros)
 
         self.drop1 = tf.keras.layers.Dropout(rate=0.2)
