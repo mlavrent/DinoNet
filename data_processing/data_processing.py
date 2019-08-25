@@ -96,7 +96,7 @@ class DataLoader(Sequence):
         self.batchSize = self.datasetSize if batchSize is None else batchSize
 
     def __getitem__(self, i: int) -> Tuple[np.ndarray, np.ndarray]:
-        batch = self.dataList[(i % self.datasetSize) * self.batchSize:]
+        batch = self.dataList[i * self.batchSize:(i + 1) * self.batchSize]
         return np.array([d.get_input() for d in batch]), np.array([d.get_target() for d in batch])
 
     def __len__(self) -> int:
