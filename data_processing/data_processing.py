@@ -80,7 +80,7 @@ class DataFile:
 
 
 class DataLoader(Sequence):
-    def __init__(self, datasetNames: List[str], dataType: DataType, batchSize: Optional[int]):
+    def __init__(self, datasetNames: List[str], dataType: DataType, batchSize: Optional[int], resampleCategories=False):
         self.dataList = []
         for datasetName in datasetNames:
             dataFile = DataFile(dataType, datasetName)
@@ -89,9 +89,26 @@ class DataLoader(Sequence):
                 self.dataList.append(dataPoint)
 
             dataFile.close()
+        assert len(self.dataList) > 0
 
         random.shuffle(self.dataList)
+        if resampleCategories:
+            # Multiply each category by (# in max cat)/(# in this cat) and add that to datalist
+            dataByCategory = [[] for _ in self.dataList[0].get_target()]
 
+            for point in self.dataList:
+                category = np.argmax(point.get_target())
+                dataByCategory[category].append(point)
+
+            maxCount = max([len(l) for l in dataByCategory])
+
+            self.dataList = []
+            for categoryData in dataByCategory:
+                q, r = divmod(maxCount, len(categoryData))
+                self.dataList.extend(categoryData * q + categoryData[:r])
+
+
+        random.shuffle(self.dataList)
         self.datasetSize = len(self.dataList)
         self.batchSize = self.datasetSize if batchSize is None else batchSize
 
