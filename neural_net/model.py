@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     # Create Data Loader
     datasets = ["game1", "game2", "game3", "game4", "game5"]
-    trainData = DataLoader(datasets, DataType.TRAINING, batchSize=100)
+    trainData = DataLoader(datasets, DataType.TRAINING, batchSize=100, resampleCategories=True)
     valData = DataLoader(datasets, DataType.VALIDATION, batchSize=500)
 
     # Actions, in order they should be performed
@@ -155,7 +155,6 @@ if __name__ == "__main__":
                                 validation_data=valData,
                                 validation_steps=1,
                                 validation_freq=1,
-                                class_weight={0: 1/8.0, 1: 1/2.7, 2: 1/89.4},
                                 workers=2,
                                 use_multiprocessing=True,
                                 shuffle=True,)
