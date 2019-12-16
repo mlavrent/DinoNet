@@ -1,5 +1,5 @@
 numpy==1.16.1+mkl
-tensorflow==1.14
+tensorflow==1.15.0
 selenium==3.141.0
 Pillow==6.1.0
 PyQt5==5.13.0
